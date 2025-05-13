@@ -77,6 +77,7 @@ const { ObjectId } = require('mongodb');
 
 
 // Vote for a candidate
+// Vote for a candidate (ensure one vote per user)
 app.post('/api/vote', async (req, res) => {
   const { nid, candidateId } = req.body;
 
@@ -85,6 +86,12 @@ app.post('/api/vote', async (req, res) => {
 
     if (!user) {
       return res.status(400).send('User not found');
+    }
+
+    // Check if the user has already voted
+    const hasVoted = await db.collection('users').findOne({ nid, voted: true });
+    if (hasVoted) {
+      return res.status(400).send('You have already voted');
     }
 
     const candidate = await db.collection('candidates').findOne({ _id: new ObjectId(candidateId) });
@@ -98,12 +105,19 @@ app.post('/api/vote', async (req, res) => {
       { $inc: { votes: 1 } }
     );
 
+    // Mark the user as voted
+    await db.collection('users').updateOne(
+      { nid },
+      { $set: { voted: true } }
+    );
+
     res.status(200).send('Vote submitted');
   } catch (error) {
-    console.error(error); // Helps you see what’s going wrong
+    console.error(error);
     res.status(500).send('Error submitting vote');
   }
 });
+
 
 // Get all candidates
 app.get('/api/candidates', async (req, res) => {
