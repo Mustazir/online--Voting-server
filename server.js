@@ -7,7 +7,7 @@ require('dotenv').config();
 
 const app = express();
 const port = 5000;
-const uri = process.env.MONGO_URI;
+const uri = `mongodb+srv://vote:8qEnDajGEnNAC434@cluster0.6ntmcb4.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
 // Middleware
 app.use(cors());
@@ -34,6 +34,20 @@ app.post('/api/register', async (req, res) => {
     .then(() => res.status(200).send('User registered'))
     .catch(err => res.status(500).send('Error registering user'));
 });
+
+
+// Get all users
+app.get('/api/users', async (req, res) => {
+  try {
+    const users = await db.collection('users').find().toArray();
+    res.status(200).json(users);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Error fetching users');
+  }
+});
+
+
 
 // User login
 app.post('/api/users/login', async (req, res) => {
